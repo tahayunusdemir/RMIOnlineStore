@@ -6,9 +6,9 @@ This TODO list details the steps to be followed to develop the RMI-based "Sports
 
 ---
 
-### ☐ Phase 0: Project Setup (IntelliJ IDEA)
+### ☑ Phase 0: Project Setup (IntelliJ IDEA)
 
--   [ ] **Create New Project:**
+-   [x] **Create New Project:**
     1.  Open IntelliJ IDEA.
     2.  On the welcome screen or from the `File` menu, click on `New -> Project...`.
     3.  In the "New Project" window that opens:
@@ -20,7 +20,7 @@ This TODO list details the steps to be followed to develop the RMI-based "Sports
         -   Uncheck the `Add sample code` box.
     4.  Click the `Create` button.
 
--   [ ] **Create Package Structure:**
+-   [x] **Create Package Structure:**
     1.  When the project panel opens on the left, find the `src` folder.
     2.  Right-click on the `src` folder and select `New -> Package`.
     3.  In the box that opens, type `common` and press Enter.
@@ -36,17 +36,17 @@ This TODO list details the steps to be followed to develop the RMI-based "Sports
 
 ### ☐ Phase 1: Creating the Project Structure and Common Classes
 
--   [ ] **Create Project Directory:** Structure the project under three main Java packages:
+-   [x] **Create Project Directory:** Structure the project under three main Java packages:
     -   `common`: For classes that will be used by both the client and the server.
     -   `server`: For server-specific implementation classes.
     -   `client`: For classes belonging to the client application.
 
--   [ ] **Define Data Transfer Objects (DTOs) (`common` package):**
-    -   [ ] `Product.java` (`Serializable`): `id`, `name` (e.g., "Nike Air Zoom Pegasus 40"), `description`, `price`, `stockQuantity`, `category`, `brand` (e.g., "Nike"), `size` (e.g., "42"), `color` (e.g., "Black").
-    -   [ ] `Customer.java` (`Serializable`): `id`, `username`, `password`, `name`, `address`.
-    -   [ ] `Order.java` (`Serializable`): `id`, `customerId`, `orderDate`, list of items, `totalAmount`, `status` (enum: `PENDING`, `SHIPPED`, `DELIVERED`).
-    -   [ ] `OrderItem.java` (`Serializable`): `productId`, `quantity`, `price`.
-    -   [ ] `Category.java` (`Serializable`): `id`, `name` (e.g., "Running Shoes", "Football Jerseys").
+-   [x] **Define Data Transfer Objects (DTOs) (`common` package):**
+    -   [x] `Product.java` (`Serializable`): `id`, `name` (e.g., "Nike Air Zoom Pegasus 40"), `description`, `price`, `stockQuantity`, `category`, `brand` (e.g., "Nike"), `size` (e.g., "42"), `color` (e.g., "Black").
+    -   [x] `Customer.java` (`Serializable`): `id`, `username`, `password`, `name`, `address`.
+    -   [x] `Order.java` (`Serializable`): `id`, `customerId`, `orderDate`, list of items, `totalAmount`, `status` (enum: `PENDING`, `SHIPPED`, `DELIVERED`).
+    -   [x] `OrderItem.java` (`Serializable`): `productId`, `quantity`, `price`.
+    -   [x] `Category.java` (`Serializable`): `id`, `name` (e.g., "Running Shoes", "Football Jerseys").
 
 ---
 
