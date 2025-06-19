@@ -18,6 +18,13 @@ public interface IAdminPanel extends Remote {
     void addProduct(Product product) throws RemoteException;
 
     /**
+     * Updates an existing product's details.
+     * @param product The Product object with updated information.
+     * @throws RemoteException if the product doesn't exist or a database error occurs.
+     */
+    void updateProduct(Product product) throws RemoteException;
+
+    /**
      * Updates the stock quantity for a specific product.
      * @param productId The ID of the product to update.
      * @param newQuantity The new stock quantity.
@@ -26,11 +33,19 @@ public interface IAdminPanel extends Remote {
     void updateStock(int productId, int newQuantity) throws RemoteException;
 
     /**
-     * Retrieves a summary of store statistics.
-     * @return A string containing key metrics like total users, products, and revenue.
+     * Retrieves a summary of simple store statistics (dashboard view).
+     * @return A string containing key metrics like total users, products, and orders.
      * @throws RemoteException if a database error occurs.
      */
-    String getStatistics() throws RemoteException;
+    String getDashboardStatistics() throws RemoteException;
+
+    /**
+     * Retrieves a more detailed statistics report.
+     * Includes best/least selling products, top customers, and turnover.
+     * @return A formatted string containing the advanced report.
+     * @throws RemoteException if a database error occurs.
+     */
+    String getAdvancedStatisticsReport() throws RemoteException;
 
     /**
      * Retrieves a list of all products in the store.
@@ -60,6 +75,13 @@ public interface IAdminPanel extends Remote {
      * @throws RemoteException if the category already exists or a database error occurs.
      */
     void addCategory(String categoryName) throws RemoteException;
+
+    /**
+     * Updates an existing category's details.
+     * @param category The Category object with updated information.
+     * @throws RemoteException if the category doesn't exist or a database error occurs.
+     */
+    void updateCategory(Category category) throws RemoteException;
 
     /**
      * Retrieves all product categories.

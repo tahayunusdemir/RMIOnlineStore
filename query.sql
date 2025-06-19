@@ -39,7 +39,7 @@ CREATE TABLE IF NOT EXISTS orders (
     customerId INT NOT NULL,
     orderDate DATETIME NOT NULL,
     totalAmount DECIMAL(10, 2) NOT NULL,
-    status ENUM('PENDING', 'SHIPPED', 'DELIVERED') NOT NULL,
+    status ENUM('PENDING', 'PROCESSING', 'SHIPPED', 'DELIVERED', 'CANCELLED') NOT NULL,
     FOREIGN KEY (customerId) REFERENCES customers(id)
 );
 
@@ -104,3 +104,10 @@ INSERT INTO orders (customerId, orderDate, totalAmount, status) VALUES
 
 INSERT INTO order_items (orderId, productId, quantity, price) VALUES
 (LAST_INSERT_ID(), (SELECT id FROM products WHERE name LIKE 'Real Madrid%'), 1, 95.50);
+
+-- Let's create a sample PROCESSING order for Bob
+INSERT INTO orders (customerId, orderDate, totalAmount, status) VALUES
+((SELECT id FROM customers WHERE username = 'bob'), NOW(), 180.00, 'PROCESSING');
+
+INSERT INTO order_items (orderId, productId, quantity, price) VALUES
+(LAST_INSERT_ID(), (SELECT id FROM products WHERE name LIKE 'Adidas Ultraboost%'), 1, 180.00);

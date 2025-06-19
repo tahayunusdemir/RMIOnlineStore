@@ -34,6 +34,19 @@ public interface IUserSession extends Remote {
     Map<Product, Integer> viewCart() throws RemoteException;
 
     /**
+     * Removes a product entirely from the user's shopping cart.
+     * @param productId The ID of the product to remove.
+     * @throws RemoteException if a communication-related error occurs.
+     */
+    void removeFromCart(int productId) throws RemoteException;
+
+    /**
+     * Clears all items from the user's shopping cart.
+     * @throws RemoteException if a communication-related error occurs.
+     */
+    void clearCart() throws RemoteException;
+
+    /**
      * Places an order with the items currently in the shopping cart.
      * This action will clear the cart upon success.
      * @return An Order object representing the newly created order.

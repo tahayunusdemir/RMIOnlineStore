@@ -143,9 +143,11 @@ public class StoreClient extends UnicastRemoteObject implements IClientCallback 
             System.out.println("1. Browse Products");
             System.out.println("2. Add to Cart");
             System.out.println("3. View Cart");
-            System.out.println("4. Place Order");
-            System.out.println("5. View Order History");
-            System.out.println("6. Logout");
+            System.out.println("4. Remove from Cart");
+            System.out.println("5. Clear Cart");
+            System.out.println("6. Place Order");
+            System.out.println("7. View Order History");
+            System.out.println("8. Logout");
             System.out.print("Choose an option: ");
             int choice = scanner.nextInt();
             scanner.nextLine();
@@ -167,24 +169,38 @@ public class StoreClient extends UnicastRemoteObject implements IClientCallback 
                         System.out.println("Product added to cart.");
                         break;
                     case 3:
-                        Map<Product, Integer> cart = userSession.viewCart();
-                        System.out.println("--- Your Cart ---");
-                        if (cart.isEmpty()) {
-                            System.out.println("Your cart is empty.");
-                        } else {
-                            cart.forEach((p, q) -> System.out.printf("Product: %s, Quantity: %d%n", p.getName(), q));
-                        }
+                        viewCartDetailed();
                         break;
                     case 4:
-                        Order order = userSession.placeOrder();
-                        System.out.println("Order placed successfully! Order ID: " + order.getId());
+                        removeFromCartFlow(scanner);
                         break;
                     case 5:
+                        System.out.print("Are you sure you want to clear your entire cart? (y/n): ");
+                        String confirmation = scanner.nextLine();
+                        if ("y".equalsIgnoreCase(confirmation)) {
+                            userSession.clearCart();
+                            System.out.println("Your cart has been cleared.");
+                        } else {
+                            System.out.println("Operation cancelled.");
+                        }
+                        break;
+                    case 6:
+                        Order order = userSession.placeOrder();
+                        System.out.println("\n--- Order Confirmation ---");
+                        System.out.println("Order placed successfully!");
+                        System.out.println("Order ID: " + order.getId());
+                        System.out.println("Order Date: " + order.getOrderDate());
+                        System.out.printf("Total Amount: $%.2f%n", order.getTotalAmount());
+                        System.out.println("Status: " + order.getStatus());
+                        System.out.println("\nNote: Payment will be made upon delivery of the product.");
+                        System.out.println("--- Thank You! ---");
+                        break;
+                    case 7:
                         List<Order> history = userSession.getOrderHistory();
                         System.out.println("--- Your Order History ---");
                         history.forEach(o -> System.out.printf("Order ID: %d, Date: %s, Total: %.2f, Status: %s%n", o.getId(), o.getOrderDate(), o.getTotalAmount(), o.getStatus()));
                         break;
-                    case 6:
+                    case 8:
                         userSession.logout();
                         userSession = null;
                         System.out.println("Logged out.");
@@ -200,6 +216,37 @@ public class StoreClient extends UnicastRemoteObject implements IClientCallback 
         }
     }
 
+    private static void viewCartDetailed() throws RemoteException {
+        Map<Product, Integer> cart = userSession.viewCart();
+        System.out.println("--- Your Cart ---");
+        if (cart.isEmpty()) {
+            System.out.println("Your cart is empty.");
+        } else {
+            cart.forEach((p, q) -> System.out.printf("ID: %d, Product: %s, Quantity: %d%n", p.getId(), p.getName(), q));
+        }
+    }
+
+    private static void removeFromCartFlow(Scanner scanner) throws RemoteException {
+        System.out.println("\n--- Remove from Cart ---");
+        viewCartDetailed();
+        Map<Product, Integer> cart = userSession.viewCart();
+        if (cart.isEmpty()) {
+            return; // Nothing to remove
+        }
+        String prodIdStr = getStringInput(scanner, "Enter Product ID to remove (or 'cancel'): ");
+        if (prodIdStr == null) {
+            System.out.println("Cancelled.");
+            return;
+        }
+        try {
+            int prodId = Integer.parseInt(prodIdStr);
+            userSession.removeFromCart(prodId);
+            System.out.println("Product removed from cart.");
+        } catch (NumberFormatException e) {
+            System.out.println("Invalid Product ID format.");
+        }
+    }
+
     /**
      * Handles the menu and actions for a logged-in administrator.
      */
@@ -208,15 +255,18 @@ public class StoreClient extends UnicastRemoteObject implements IClientCallback 
             System.out.println("\n--- Admin Panel ---");
             System.out.println("1. Browse Products");
             System.out.println("2. Add Product");
-            System.out.println("3. Update Stock");
-            System.out.println("4. Delete Product");
-            System.out.println("5. View Statistics");
-            System.out.println("6. List Orders");
-            System.out.println("7. Update Order Status");
-            System.out.println("8. List Categories");
-            System.out.println("9. Add New Category");
-            System.out.println("10. Delete Category");
-            System.out.println("11. Logout");
+            System.out.println("3. Update Product");
+            System.out.println("4. Update Stock");
+            System.out.println("5. Delete Product");
+            System.out.println("6. View Dashboard Statistics");
+            System.out.println("7. View Advanced Reports");
+            System.out.println("8. List Orders");
+            System.out.println("9. Update Order Status");
+            System.out.println("10. List Categories");
+            System.out.println("11. Add New Category");
+            System.out.println("12. Update Category");
+            System.out.println("13. Delete Category");
+            System.out.println("14. Logout");
             System.out.print("Choose an option: ");
             int choice = getIntInput(scanner);
             scanner.nextLine(); // Consume newline
@@ -230,30 +280,39 @@ public class StoreClient extends UnicastRemoteObject implements IClientCallback 
                         addProductFlow(scanner);
                         break;
                     case 3:
-                        updateStockFlow(scanner);
+                        editProductFlow(scanner);
                         break;
                     case 4:
-                        deleteProductFlow(scanner);
+                        updateStockFlow(scanner);
                         break;
                     case 5:
-                        viewStatistics();
+                        deleteProductFlow(scanner);
                         break;
                     case 6:
-                        listOrdersAdmin();
+                        viewDashboardStatistics();
                         break;
                     case 7:
-                        updateOrderStatusFlow(scanner);
+                        viewAdvancedReports();
                         break;
                     case 8:
-                        listCategoriesAdmin();
+                        listOrdersAdmin();
                         break;
                     case 9:
-                        addCategoryFlow(scanner);
+                        updateOrderStatusFlow(scanner);
                         break;
                     case 10:
-                        deleteCategoryFlow(scanner);
+                        listCategoriesAdmin();
                         break;
                     case 11:
+                        addCategoryFlow(scanner);
+                        break;
+                    case 12:
+                        editCategoryFlow(scanner);
+                        break;
+                    case 13:
+                        deleteCategoryFlow(scanner);
+                        break;
+                    case 14:
                         adminPanel = null;
                         System.out.println("Admin logged out.");
                         return;
@@ -373,6 +432,70 @@ public class StoreClient extends UnicastRemoteObject implements IClientCallback 
         System.out.println("Product added.");
     }
 
+    private static void editProductFlow(Scanner scanner) throws RemoteException {
+        System.out.println("\n--- Edit Product (type 'cancel' at any prompt to exit) ---");
+        browseProductsAdmin(); // Show current products
+        String prodIdStr = getStringInput(scanner, "Enter Product ID to edit: ");
+        if (prodIdStr == null) { System.out.println("Cancelled."); return; }
+        int prodId = Integer.parseInt(prodIdStr);
+
+        // Find the product to show current values
+        Product productToEdit = adminPanel.browseProducts().stream()
+                .filter(p -> p.getId() == prodId)
+                .findFirst()
+                .orElse(null);
+
+        if (productToEdit == null) {
+            System.out.println("Product not found.");
+            return;
+        }
+
+        System.out.println("Editing Product: " + productToEdit.getName() + ". Press Enter to keep the current value.");
+
+        String name = getStringInput(scanner, "New Name [" + productToEdit.getName() + "]: ");
+        if (name == null) { System.out.println("Cancelled."); return; }
+        if (name.isEmpty()) name = productToEdit.getName();
+
+        String desc = getStringInput(scanner, "New Description [" + productToEdit.getDescription() + "]: ");
+        if (desc == null) { System.out.println("Cancelled."); return; }
+        if (desc.isEmpty()) desc = productToEdit.getDescription();
+
+        String priceStr = getStringInput(scanner, "New Price [" + productToEdit.getPrice() + "]: ");
+        if (priceStr == null) { System.out.println("Cancelled."); return; }
+        double price = priceStr.isEmpty() ? productToEdit.getPrice() : Double.parseDouble(priceStr);
+
+        String stockStr = getStringInput(scanner, "New Stock [" + productToEdit.getStockQuantity() + "]: ");
+        if (stockStr == null) { System.out.println("Cancelled."); return; }
+        int stock = stockStr.isEmpty() ? productToEdit.getStockQuantity() : Integer.parseInt(stockStr);
+
+        // Category selection
+        List<Category> categories = adminPanel.getAllCategories();
+        System.out.println("Select a new category [" + productToEdit.getCategory() + "]:");
+        for (int i = 0; i < categories.size(); i++) {
+            System.out.printf("%d. %s%n", i + 1, categories.get(i).getName());
+        }
+        String catChoiceStr = getStringInput(scanner, "Choose category number (or press Enter to keep current): ");
+        if (catChoiceStr == null) { System.out.println("Cancelled."); return; }
+        String cat = catChoiceStr.isEmpty() ? productToEdit.getCategory() : categories.get(Integer.parseInt(catChoiceStr) - 1).getName();
+
+
+        String brand = getStringInput(scanner, "New Brand [" + productToEdit.getBrand() + "]: ");
+        if (brand == null) { System.out.println("Cancelled."); return; }
+        if (brand.isEmpty()) brand = productToEdit.getBrand();
+
+        String size = getStringInput(scanner, "New Size [" + productToEdit.getSize() + "]: ");
+        if (size == null) { System.out.println("Cancelled."); return; }
+        if (size.isEmpty()) size = productToEdit.getSize();
+
+        String color = getStringInput(scanner, "New Color [" + productToEdit.getColor() + "]: ");
+        if (color == null) { System.out.println("Cancelled."); return; }
+        if (color.isEmpty()) color = productToEdit.getColor();
+
+        Product updatedProduct = new Product(prodId, name, desc, price, stock, cat, brand, size, color);
+        adminPanel.updateProduct(updatedProduct);
+        System.out.println("Product updated.");
+    }
+
     private static void updateStockFlow(Scanner scanner) throws RemoteException {
         System.out.println("\n--- Update Stock (type 'cancel' to exit) ---");
         browseProductsAdmin();
@@ -399,10 +522,16 @@ public class StoreClient extends UnicastRemoteObject implements IClientCallback 
         System.out.println("Request to delete product sent.");
     }
 
-    private static void viewStatistics() throws RemoteException {
-        String stats = adminPanel.getStatistics();
-        System.out.println("\n--- Server Statistics ---");
+    private static void viewDashboardStatistics() throws RemoteException {
+        String stats = adminPanel.getDashboardStatistics();
+        System.out.println("\n--- Dashboard Statistics ---");
         System.out.println(stats);
+    }
+
+    private static void viewAdvancedReports() throws RemoteException {
+        String report = adminPanel.getAdvancedStatisticsReport();
+        System.out.println("\n--- Advanced Statistics Report ---");
+        System.out.println(report);
     }
 
     private static void listOrdersAdmin() throws RemoteException {
@@ -464,6 +593,35 @@ public class StoreClient extends UnicastRemoteObject implements IClientCallback 
             adminPanel.addCategory(newCatName);
             System.out.println("Request to add category '" + newCatName + "' sent.");
         }
+    }
+
+    private static void editCategoryFlow(Scanner scanner) throws RemoteException {
+        System.out.println("\n--- Edit Category (type 'cancel' to exit) ---");
+        listCategoriesAdmin(); // Show current categories
+        String catIdStr = getStringInput(scanner, "\nEnter Category ID to edit: ");
+        if (catIdStr == null) { System.out.println("Cancelled."); return; }
+        int catId = Integer.parseInt(catIdStr);
+
+        // Find the category to show the current name
+        Category categoryToEdit = adminPanel.getAllCategories().stream()
+                .filter(c -> c.getId() == catId)
+                .findFirst()
+                .orElse(null);
+
+        if (categoryToEdit == null) {
+            System.out.println("Category not found.");
+            return;
+        }
+
+        String newCatName = getStringInput(scanner, "Enter new name for '" + categoryToEdit.getName() + "': ");
+        if (newCatName == null || newCatName.trim().isEmpty()) {
+            System.out.println("Cancelled or empty name provided. No changes made.");
+            return;
+        }
+
+        Category updatedCategory = new Category(catId, newCatName);
+        adminPanel.updateCategory(updatedCategory);
+        System.out.println("Request to update category sent.");
     }
     
     private static void deleteCategoryFlow(Scanner scanner) throws RemoteException {

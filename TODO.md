@@ -112,15 +112,20 @@ This TODO list details the steps to be followed to develop the RMI-based "Sports
 -   [ ] **Start the Server:** Run `StoreServer`.
 -   [ ] **Start the Client:** Run multiple `StoreClient` instances in different terminals.
 -   [ ] **Test Scenarios:**
-    -   [ ] Register a new user.
-    -   [ ] Log in with the registered user.
-    -   [ ] List the products.
-    -   [ ] **Concurrency Test:** Try to decrease the stock of the same product from two different clients at the same time and verify that the result in the database is correct.
-    -   [ ] Add a product to the cart.
-    -   [ ] Place an order.
-    -   [ ] Log in as an administrator, add a new product (e.g., "Adidas Ultraboost" shoes).
-    -   [ ] Verify that the other client sees the newly added product.
-    -   [ ] **Callback Test:** Manually change the status of an order on the server side (or add an admin method for this) and check if the client receives a notification. 
+    -   [x] Register a new user.
+    -   [x] Log in with the registered user.
+    -   [x] List the products.
+    -   [x] Add a product to the cart.
+    -   [x] Place an order and verify the detailed invoice information.
+    -   [ ] **Stock Error Test:** Try to order more units of a product than are available in stock and verify that a user-friendly error message ("Not enough stock for...") is displayed.
+    -   [ ] **Concurrency Test:** Try to decrease the stock of the same product from two different clients at the same time and verify that the result in the database is correct and no race conditions occur.
+    -   [ ] Log in as an administrator.
+    -   [ ] **Add Product/Category:** Add a new product and a new category.
+    -   [ ] **Edit Product/Category:** Edit the details of the newly created product and category and verify the changes are saved.
+    -   [ ] **Statistics Test:** Check both the Dashboard Statistics and the Advanced Statistics Report to ensure the data is calculated and displayed correctly.
+    -   [ ] **Delete Safety Test:** Try to delete a category that still has products assigned to it. Verify that the server returns a specific error message and prevents the deletion. Do the same for a product that is part of an existing order.
+    -   [ ] **Callback Test:** With one client logged in, use an admin client to change the status of that user's order (e.g., to `PROCESSING` or `SHIPPED`). Verify that the user client instantly receives a notification about the status update.
+    -   [ ] **Logout Test:** Ensure that after a user logs out, the server no longer holds their callback reference and they stop receiving notifications.
 
 ---
 
@@ -137,6 +142,7 @@ This TODO list details the steps to be followed to develop the RMI-based "Sports
 
 -   [x] **Improved Business Logic (`server` package):**
     -   [x] **Cart Validation:** The `addToCart` method in `UserSessionImpl` now validates against the database to ensure a product exists and has sufficient stock before being added to a user's cart.
+    -   [x] **Robust Error Handling:** The `placeOrder` method now provides specific, user-friendly error messages (e.g., for stock shortages) instead of generic database exceptions.
 
 -   [x] **Updated Client UI (`StoreClient`):**
     -   [x] The admin menu in the client application has been updated to include the new "Browse Products" and "Update Order Status" features.
@@ -155,10 +161,13 @@ This TODO list details the steps to be followed to develop the RMI-based "Sports
     -   [x] Refactored complex admin actions into dedicated helper methods (`addProductFlow`, `updateStockFlow`, etc.) to improve code readability and maintainability.
 
 -   [x] **Advanced Product & Category Management:**
+    -   [x] **Edit Product/Category:** Implemented functionality for admins to edit existing products and categories with a user-friendly workflow that shows current values.
     -   [x] **Delete Product:** Added functionality for admins to delete products. The system includes a crucial safety check to prevent deletion if the product is linked to any existing orders.
     -   [x] **Delete Category:** Implemented a feature to delete categories, with a safeguard that prevents removal if any products are still assigned to that category.
     -   [x] **List Categories:** Created a dedicated menu option for admins to quickly view all available categories and their IDs.
 
--   [x] **Enhanced Workflows:**
+-   [x] **Enhanced Workflows & Statistics:**
     -   [x] **Add Product Workflow:** Admins must now select a category from a dynamically generated list instead of typing a name manually, ensuring data consistency.
-    -   [x] **Add Category Workflow:** Before prompting for a new category name, the client now displays a list of existing categories to help prevent duplicates. 
+    -   [x] **Add Category Workflow:** Before prompting for a new category name, the client now displays a list of existing categories to help prevent duplicates.
+    -   [x] **Advanced Statistics:** Implemented a dual-layer statistics system, offering both a quick dashboard view and a detailed report on best-selling items, top customers, and recent turnover.
+    -   [x] **Enhanced Invoicing:** When a user places an order, they now see a detailed confirmation receipt, including a note that payment is due on delivery. 

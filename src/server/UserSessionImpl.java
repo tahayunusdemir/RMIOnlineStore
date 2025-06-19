@@ -129,6 +129,24 @@ public class UserSessionImpl extends UnicastRemoteObject implements IUserSession
     }
 
     @Override
+    public synchronized void removeFromCart(int productId) throws RemoteException {
+        if (shoppingCart.containsKey(productId)) {
+            shoppingCart.remove(productId);
+            System.out.println("Product " + productId + " removed from cart for customer " + customer.getUsername());
+        } else {
+            System.err.println("Attempted to remove non-existent product " + productId + " from cart for " + customer.getUsername());
+        }
+    }
+
+    @Override
+    public synchronized void clearCart() throws RemoteException {
+        if (!shoppingCart.isEmpty()) {
+            shoppingCart.clear();
+            System.out.println("Cart cleared for customer " + customer.getUsername());
+        }
+    }
+
+    @Override
     public synchronized Order placeOrder() throws RemoteException {
         if (shoppingCart.isEmpty()) {
             throw new RemoteException("Shopping cart is empty.");
@@ -150,7 +168,9 @@ public class UserSessionImpl extends UnicastRemoteObject implements IUserSession
                     ResultSet rs = ps.executeQuery();
                     if (rs.next()) {
                         if (rs.getInt("stockQuantity") < entry.getValue()) {
-                            throw new SQLException("Not enough stock for product ID: " + entry.getKey());
+                            // Fetch product name for a more informative error message.
+                            String productName = getProductName(conn, entry.getKey());
+                            throw new SQLException("Not enough stock for product: " + productName + " (ID: " + entry.getKey() + ")");
                         }
                     } else {
                         throw new SQLException("Product not found with ID: " + entry.getKey());
@@ -240,6 +260,18 @@ public class UserSessionImpl extends UnicastRemoteObject implements IUserSession
             total += getProductPrice(conn, entry.getKey()) * entry.getValue();
         }
         return total;
+    }
+
+    private String getProductName(Connection conn, int productId) throws SQLException {
+        String sql = "SELECT name FROM products WHERE id = ?";
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, productId);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                return rs.getString("name");
+            }
+            return "Unknown Product";
+        }
     }
 
     private double getProductPrice(Connection conn, int productId) throws SQLException {

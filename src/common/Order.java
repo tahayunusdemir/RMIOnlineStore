@@ -17,8 +17,10 @@ public class Order implements Serializable {
      */
     public enum Status {
         PENDING, // Order has been placed but not yet processed.
+        PROCESSING, // Order is being prepared for shipment.
         SHIPPED, // Order has been shipped to the customer.
-        DELIVERED // Order has been successfully delivered.
+        DELIVERED, // Order has been successfully delivered.
+        CANCELLED // Order has been cancelled.
     }
 
     private int id; // The unique identifier for the order.

@@ -13,6 +13,8 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
 
 public class AdminPanelImpl extends UnicastRemoteObject implements IAdminPanel {
 
@@ -75,7 +77,7 @@ public class AdminPanelImpl extends UnicastRemoteObject implements IAdminPanel {
     }
 
     @Override
-    public synchronized String getStatistics() throws RemoteException {
+    public synchronized String getDashboardStatistics() throws RemoteException {
         StringBuilder stats = new StringBuilder();
         String totalCustomersSql = "SELECT COUNT(*) FROM customers";
         String totalProductsSql = "SELECT COUNT(*) FROM products";
@@ -122,6 +124,62 @@ public class AdminPanelImpl extends UnicastRemoteObject implements IAdminPanel {
 
         System.out.println("Generating statistics...");
         return stats.toString();
+    }
+
+    @Override
+    public String getAdvancedStatisticsReport() throws RemoteException {
+        StringBuilder report = new StringBuilder();
+        report.append("--- Advanced Statistics Report ---\n\n");
+
+        try (Connection conn = DatabaseManager.getConnection()) {
+            // 1. Best-Selling Products
+            report.append("--- Best-Selling Products (All Time) ---\n");
+            String bestSellingSql = "SELECT p.name, SUM(oi.quantity) AS total_sold " +
+                                    "FROM order_items oi " +
+                                    "JOIN products p ON oi.productId = p.id " +
+                                    "GROUP BY p.name " +
+                                    "ORDER BY total_sold DESC " +
+                                    "LIMIT 5";
+            try (PreparedStatement pstmt = conn.prepareStatement(bestSellingSql);
+                 ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    report.append(String.format("- %s: %d units sold\n", rs.getString("name"), rs.getInt("total_sold")));
+                }
+            }
+            report.append("\n");
+
+            // 2. Top 5 Customers by Spending
+            report.append("--- Top 5 Customers (by Total Spending) ---\n");
+            String topCustomersSql = "SELECT c.name, SUM(o.totalAmount) AS total_spent " +
+                                     "FROM orders o " +
+                                     "JOIN customers c ON o.customerId = c.id " +
+                                     "WHERE o.status = 'DELIVERED' " +
+                                     "GROUP BY c.name " +
+                                     "ORDER BY total_spent DESC " +
+                                     "LIMIT 5";
+            try (PreparedStatement pstmt = conn.prepareStatement(topCustomersSql);
+                 ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    report.append(String.format("- %s: $%.2f\n", rs.getString("name"), rs.getDouble("total_spent")));
+                }
+            }
+            report.append("\n");
+
+            // 3. Turnover in the last 30 days
+            report.append("--- Turnover (Last 30 Days) ---\n");
+            String turnoverSql = "SELECT SUM(totalAmount) FROM orders WHERE status = 'DELIVERED' AND orderDate >= DATE_SUB(NOW(), INTERVAL 30 DAY)";
+            try (PreparedStatement pstmt = conn.prepareStatement(turnoverSql);
+                 ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    report.append(String.format("Total revenue from delivered orders in the last 30 days: $%.2f\n", rs.getDouble(1)));
+                }
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            throw new RemoteException("Database error while generating advanced statistics report.", e);
+        }
+        return report.toString();
     }
 
     @Override
@@ -291,33 +349,133 @@ public class AdminPanelImpl extends UnicastRemoteObject implements IAdminPanel {
 
     @Override
     public synchronized void deleteCategory(int categoryId) throws RemoteException {
-        // Safety check: a category cannot be deleted if products are still assigned to it.
-        String checkProductsSql = "SELECT COUNT(*) FROM products WHERE categoryId = ?";
+        String getProductsSql = "SELECT id, name FROM products WHERE categoryId = ?";
+        String checkOrdersSql = "SELECT COUNT(*) FROM order_items WHERE productId = ?";
+        String deleteProductsSql = "DELETE FROM products WHERE categoryId = ?";
         String deleteCategorySql = "DELETE FROM categories WHERE id = ?";
+        Connection conn = null;
 
-        try (Connection conn = DatabaseManager.getConnection()) {
-            // Check for products in this category before deleting.
-            try (PreparedStatement pstmt = conn.prepareStatement(checkProductsSql)) {
+        try {
+            conn = DatabaseManager.getConnection();
+            conn.setAutoCommit(false); // Start transaction
+
+            // 1. Find all products in the category
+            List<Integer> productIds = new ArrayList<>();
+            Map<Integer, String> productNames = new HashMap<>();
+            try (PreparedStatement pstmt = conn.prepareStatement(getProductsSql)) {
                 pstmt.setInt(1, categoryId);
                 ResultSet rs = pstmt.executeQuery();
-                if (rs.next() && rs.getInt(1) > 0) {
-                    throw new RemoteException("Cannot delete category ID " + categoryId + ". It is currently assigned to " + rs.getInt(1) + " products.");
+                while (rs.next()) {
+                    int productId = rs.getInt("id");
+                    productIds.add(productId);
+                    productNames.put(productId, rs.getString("name"));
                 }
             }
 
-            // If no products, proceed with deletion
+            // 2. Check if any of these products are in existing orders
+            try (PreparedStatement pstmt = conn.prepareStatement(checkOrdersSql)) {
+                for (int productId : productIds) {
+                    pstmt.setInt(1, productId);
+                    ResultSet rs = pstmt.executeQuery();
+                    if (rs.next() && rs.getInt(1) > 0) {
+                        conn.rollback(); // Abort transaction
+                        throw new RemoteException("Cannot delete category. Product '" + productNames.get(productId) + "' (ID: " + productId + ") is part of an existing order.");
+                    }
+                }
+            }
+
+            // 3. If no products are in orders, delete the products in the category
+            if (!productIds.isEmpty()) {
+                try (PreparedStatement pstmt = conn.prepareStatement(deleteProductsSql)) {
+                    pstmt.setInt(1, categoryId);
+                    int deletedProducts = pstmt.executeUpdate();
+                    System.out.println("Deleted " + deletedProducts + " products associated with category ID " + categoryId);
+                }
+            }
+
+            // 4. Delete the category itself
             try (PreparedStatement pstmt = conn.prepareStatement(deleteCategorySql)) {
                 pstmt.setInt(1, categoryId);
                 int affectedRows = pstmt.executeUpdate();
                 if (affectedRows > 0) {
                     System.out.println("Category with ID " + categoryId + " deleted successfully.");
                 } else {
+                    conn.rollback();
                     throw new RemoteException("Category with ID " + categoryId + " not found.");
                 }
             }
+
+            conn.commit(); // Commit transaction
+
         } catch (SQLException e) {
+            if (conn != null) {
+                try {
+                    conn.rollback();
+                } catch (SQLException ex) {
+                    System.err.println("Error on rollback: " + ex.getMessage());
+                }
+            }
             e.printStackTrace();
             throw new RemoteException("Database error while deleting category.", e);
+        } finally {
+            if (conn != null) {
+                try {
+                    conn.setAutoCommit(true);
+                } catch (SQLException e) {
+                    System.err.println("Error restoring auto-commit: " + e.getMessage());
+                }
+            }
+        }
+    }
+
+    @Override
+    public synchronized void updateProduct(Product product) throws RemoteException {
+        String sql = "UPDATE products SET name = ?, description = ?, price = ?, stockQuantity = ?, categoryId = (SELECT id FROM categories WHERE name = ?), brand = ?, size = ?, color = ? WHERE id = ?";
+        try (Connection conn = DatabaseManager.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setString(1, product.getName());
+            pstmt.setString(2, product.getDescription());
+            pstmt.setDouble(3, product.getPrice());
+            pstmt.setInt(4, product.getStockQuantity());
+            pstmt.setString(5, product.getCategory());
+            pstmt.setString(6, product.getBrand());
+            pstmt.setString(7, product.getSize());
+            pstmt.setString(8, product.getColor());
+            pstmt.setInt(9, product.getId());
+
+            int affectedRows = pstmt.executeUpdate();
+            if (affectedRows > 0) {
+                System.out.println("Product updated successfully: " + product.getName());
+            } else {
+                throw new RemoteException("Product with ID " + product.getId() + " not found.");
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            throw new RemoteException("Database error while updating product.", e);
+        }
+    }
+
+    @Override
+    public synchronized void updateCategory(Category category) throws RemoteException {
+        String sql = "UPDATE categories SET name = ? WHERE id = ?";
+        try (Connection conn = DatabaseManager.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, category.getName());
+            pstmt.setInt(2, category.getId());
+            int affectedRows = pstmt.executeUpdate();
+            if (affectedRows > 0) {
+                System.out.println("Category " + category.getId() + " updated successfully to " + category.getName());
+            } else {
+                throw new RemoteException("Category with ID " + category.getId() + " not found.");
+            }
+        } catch (SQLException e) {
+            if (e.getSQLState().startsWith("23")) {
+                throw new RemoteException("Another category with the name '" + category.getName() + "' already exists.", e);
+            }
+            e.printStackTrace();
+            throw new RemoteException("Database error while updating category.", e);
         }
     }
 } 
