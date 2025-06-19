@@ -2,11 +2,16 @@ package common;
 
 import java.io.Serializable;
 
+/**
+ * Represents a single line item within an Order.
+ * This DTO links a Product to an Order and stores the quantity and price at the time of purchase.
+ * It is Serializable for RMI transport.
+ */
 public class OrderItem implements Serializable {
     private static final long serialVersionUID = 1L;
-    private int productId;
-    private int quantity;
-    private double price;
+    private int productId; // The ID of the product in this line item.
+    private int quantity; // The number of units of the product purchased.
+    private double price; // The price of a single unit at the time of purchase.
 
     public OrderItem(int productId, int quantity, double price) {
         this.productId = productId;

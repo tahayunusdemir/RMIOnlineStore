@@ -2,13 +2,18 @@ package common;
 
 import java.io.Serializable;
 
+/**
+ * Represents a customer account.
+ * This Data Transfer Object (DTO) holds all information related to a customer.
+ * It is marked as Serializable to be sent between the RMI server and client.
+ */
 public class Customer implements Serializable {
     private static final long serialVersionUID = 1L;
-    private int id;
-    private String username;
-    private String password;
-    private String name;
-    private String address;
+    private int id; // Unique identifier for the customer.
+    private String username; // The customer's login username.
+    private String password; // The customer's password (should be hashed in a real application).
+    private String name; // The customer's full name.
+    private String address; // The customer's shipping address.
 
     public Customer(int id, String username, String password, String name, String address) {
         this.id = id;

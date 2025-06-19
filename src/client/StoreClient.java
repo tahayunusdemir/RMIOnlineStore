@@ -19,6 +19,9 @@ public class StoreClient extends UnicastRemoteObject implements IClientCallback 
         super();
     }
 
+    /**
+     * This method is called by the server to deliver an asynchronous notification.
+     */
     @Override
     public void notify(String message) throws RemoteException {
         System.out.println("\n[SERVER NOTIFICATION] -> " + message);
@@ -26,9 +29,12 @@ public class StoreClient extends UnicastRemoteObject implements IClientCallback 
 
     public static void main(String[] args) {
         try {
+            // The client must also be a remote object to receive callbacks.
             StoreClient client = new StoreClient();
+            // Look up the remote factory object from the RMI registry.
             factory = (IStoreFactory) Naming.lookup("rmi://localhost/StoreFactory");
             System.out.println("Connected to the store server!");
+            // Start the main user interaction loop.
             handleMainMenu(client);
         } catch (Exception e) {
             System.err.println("Client exception: " + e.getMessage());
@@ -36,6 +42,9 @@ public class StoreClient extends UnicastRemoteObject implements IClientCallback 
         }
     }
 
+    /**
+     * Handles the main menu logic, directing the user to login, register, or exit.
+     */
     private static void handleMainMenu(StoreClient client) {
         Scanner scanner = new Scanner(System.in);
         while (true) {
@@ -78,11 +87,15 @@ public class StoreClient extends UnicastRemoteObject implements IClientCallback 
         }
     }
 
+    /**
+     * Guides the user through the login process.
+     */
     private static void loginUser(Scanner scanner, StoreClient client) throws RemoteException {
         System.out.print("Enter username: ");
         String username = scanner.nextLine();
         System.out.print("Enter password: ");
         String password = scanner.nextLine();
+        // The 'client' instance is passed as the callback object.
         userSession = factory.login(username, password, client);
         if (userSession == null) {
             System.out.println("Login failed. Please check your credentials.");
@@ -105,6 +118,9 @@ public class StoreClient extends UnicastRemoteObject implements IClientCallback 
         System.out.println("Registration successful! You can now log in.");
     }
 
+    /**
+     * Guides the administrator through the login process.
+     */
     private static void loginAdmin(Scanner scanner) throws RemoteException {
         System.out.print("Enter admin username (default: admin): ");
         String username = scanner.nextLine();
@@ -118,6 +134,9 @@ public class StoreClient extends UnicastRemoteObject implements IClientCallback 
         }
     }
 
+    /**
+     * Handles the menu and actions for a logged-in customer.
+     */
     private static void handleUserSession(Scanner scanner) {
         while (true) {
             System.out.println("\n--- User Menu ---");
@@ -181,6 +200,9 @@ public class StoreClient extends UnicastRemoteObject implements IClientCallback 
         }
     }
 
+    /**
+     * Handles the menu and actions for a logged-in administrator.
+     */
     private static void handleAdminPanel(Scanner scanner) {
         while (true) {
             System.out.println("\n--- Admin Panel ---");
@@ -245,6 +267,12 @@ public class StoreClient extends UnicastRemoteObject implements IClientCallback 
     }
 
     // --- Helper for cancellable input ---
+
+    /**
+     * A helper method to get a string from the console.
+     * Allows the user to type 'cancel' to abort the current operation.
+     * @return The user's input, or null if they cancelled.
+     */
     private static String getStringInput(Scanner scanner, String prompt) {
         System.out.print(prompt);
         String input = scanner.nextLine();
@@ -254,6 +282,9 @@ public class StoreClient extends UnicastRemoteObject implements IClientCallback 
         return input;
     }
     
+    /**
+     * A robust helper to ensure an integer is entered.
+     */
     private static int getIntInput(Scanner scanner) {
         while (!scanner.hasNextInt()) {
             System.out.println("Invalid input. Please enter a number.");
@@ -263,6 +294,11 @@ public class StoreClient extends UnicastRemoteObject implements IClientCallback 
         return scanner.nextInt();
     }
 
+    /**
+     * A helper method to get a double from the console.
+     * Allows the user to type 'cancel' to abort.
+     * @return The entered double, or -1 if they cancelled.
+     */
     private static double getDoubleInput(Scanner scanner, String prompt) {
         System.out.print(prompt);
         while (!scanner.hasNextDouble()) {
@@ -277,6 +313,7 @@ public class StoreClient extends UnicastRemoteObject implements IClientCallback 
     }
 
     // --- Admin Action Flows ---
+    // These methods break down complex admin tasks into manageable steps.
 
     private static void browseProductsAdmin() throws RemoteException {
         List<Product> products = adminPanel.browseProducts();
@@ -301,6 +338,7 @@ public class StoreClient extends UnicastRemoteObject implements IClientCallback 
         if (stockStr == null) { System.out.println("Cancelled."); return; }
         int stock = Integer.parseInt(stockStr);
 
+        // Fetch categories from the server so the admin can choose from a list.
         List<Category> categories = adminPanel.getAllCategories();
         if (categories.isEmpty()) {
             System.out.println("No categories found. Please add a category first.");
@@ -386,6 +424,7 @@ public class StoreClient extends UnicastRemoteObject implements IClientCallback 
 
         System.out.println("Select new status:");
         int i = 1;
+        // Display all possible order statuses for the admin to choose from.
         for (Order.Status s : Order.Status.values()) {
             System.out.printf("%d. %s%n", i++, s.name());
         }

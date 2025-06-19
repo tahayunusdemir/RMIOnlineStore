@@ -13,6 +13,7 @@ import java.util.Map;
 public class UserSessionImpl extends UnicastRemoteObject implements IUserSession {
 
     private final Customer customer;
+    // Stores the current user's shopping cart. The key is the Product ID, and the value is the quantity.
     private final Map<Integer, Integer> shoppingCart; // ProductID -> Quantity
     private final StoreFactoryImpl storeFactory;
 
@@ -138,10 +139,10 @@ public class UserSessionImpl extends UnicastRemoteObject implements IUserSession
         
         try {
             conn = DatabaseManager.getConnection();
-            conn.setAutoCommit(false); // Start transaction
+            conn.setAutoCommit(false); // Start transaction: all or nothing.
 
-            // 1. Check stock for all items
-            // This part is simplified. A real implementation should lock the rows to prevent race conditions.
+            // 1. Verify stock for all items in the cart before proceeding.
+            // This is a crucial check to ensure the order is valid. A real-world system might use row-level locking.
             for (Map.Entry<Integer, Integer> entry : shoppingCart.entrySet()) {
                 String checkStockSql = "SELECT stockQuantity FROM products WHERE id = ?";
                 try (PreparedStatement ps = conn.prepareStatement(checkStockSql)) {
@@ -157,7 +158,7 @@ public class UserSessionImpl extends UnicastRemoteObject implements IUserSession
                 }
             }
 
-            // 2. Create the order
+            // 2. Create the main order record in the 'orders' table.
             String createOrderSql = "INSERT INTO orders (customerId, orderDate, totalAmount, status) VALUES (?, ?, ?, ?)";
             double totalAmount = calculateTotalAmount(conn);
             
@@ -172,7 +173,7 @@ public class UserSessionImpl extends UnicastRemoteObject implements IUserSession
                 if (generatedKeys.next()) {
                     int orderId = generatedKeys.getInt(1);
 
-                    // 3. Add order items and update stock
+                    // 3. Add each item from the cart to the 'order_items' table and update the product stock.
                     String orderItemSql = "INSERT INTO order_items (orderId, productId, quantity, price) VALUES (?, ?, ?, ?)";
                     String updateStockSql = "UPDATE products SET stockQuantity = stockQuantity - ? WHERE id = ?";
                     
@@ -199,13 +200,13 @@ public class UserSessionImpl extends UnicastRemoteObject implements IUserSession
                         psUpdateStock.executeBatch();
                     }
                     
-                    // Create Order object to return
+                    // Create the Order object to return to the client.
                     createdOrder = new Order(orderId, customer.getId(), new java.util.Date(), new ArrayList<>(), totalAmount, Order.Status.PENDING);
 
                 }
             }
             
-            conn.commit(); // Commit transaction
+            conn.commit(); // If all steps were successful, commit the transaction to the database.
             System.out.println("Order placed successfully for customer: " + customer.getUsername());
             shoppingCart.clear();
 
@@ -213,7 +214,7 @@ public class UserSessionImpl extends UnicastRemoteObject implements IUserSession
             e.printStackTrace();
             if (conn != null) {
                 try {
-                    conn.rollback(); // Rollback on error
+                    conn.rollback(); // If any SQL error occurs, roll back the entire transaction.
                     System.err.println("Transaction rolled back.");
                 } catch (SQLException ex) {
                     ex.printStackTrace();
@@ -223,7 +224,7 @@ public class UserSessionImpl extends UnicastRemoteObject implements IUserSession
         } finally {
             if (conn != null) {
                 try {
-                    conn.setAutoCommit(true);
+                    conn.setAutoCommit(true); // Always restore auto-commit mode.
                 } catch (SQLException e) {
                     e.printStackTrace();
                 }
@@ -281,7 +282,8 @@ public class UserSessionImpl extends UnicastRemoteObject implements IUserSession
 
     @Override
     public void logout() throws RemoteException {
-        // The factory will handle the actual removal of the session
+        // The factory handles the actual removal of the client's callback reference.
+        // This method just signals the intent to log out.
         System.out.println("Customer " + customer.getUsername() + " logging out.");
         storeFactory.logout(customer.getUsername());
     }

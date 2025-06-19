@@ -15,6 +15,8 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class StoreFactoryImpl extends UnicastRemoteObject implements IStoreFactory {
 
+    // A thread-safe map to store callback references for all currently active (logged-in) clients.
+    // The key is the client's username, and the value is their callback object.
     private final Map<String, IClientCallback> activeClients;
 
     public StoreFactoryImpl() throws RemoteException {
@@ -41,6 +43,7 @@ public class StoreFactoryImpl extends UnicastRemoteObject implements IStoreFacto
                             rs.getString("address")
                     );
                     System.out.println("Customer login successful: " + username);
+                    // If login succeeds, store the client's callback reference for future notifications.
                     activeClients.put(username, clientCallback);
                     return new UserSessionImpl(customer, this);
                 }
@@ -84,6 +87,7 @@ public class StoreFactoryImpl extends UnicastRemoteObject implements IStoreFacto
         try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setString(1, username);
             try (ResultSet rs = pstmt.executeQuery()) {
+                // If rs.next() is true, a customer with that username was found.
                 return rs.next();
             }
         }
@@ -91,6 +95,7 @@ public class StoreFactoryImpl extends UnicastRemoteObject implements IStoreFacto
 
     @Override
     public synchronized IAdminPanel adminLogin(String username, String password) throws RemoteException {
+        // Hardcoded credentials for admin access.
         if ("admin".equals(username) && "admin".equals(password)) {
             System.out.println("Admin login successful: " + username);
             return new AdminPanelImpl(this);
@@ -102,25 +107,27 @@ public class StoreFactoryImpl extends UnicastRemoteObject implements IStoreFacto
     @Override
     public void logout(String username) throws RemoteException {
         if (username != null) {
+            // Remove the client from the active list upon logout to stop sending notifications.
             activeClients.remove(username);
             System.out.println("Client " + username + " removed from active clients list.");
         }
     }
 
-    // Method to notify clients, can be called from other parts of the server
+    // Method to notify all active clients.
     public void notifyClients(String message) {
         for (IClientCallback client : activeClients.values()) {
             try {
                 client.notify(message);
             } catch (RemoteException e) {
-                // Client is likely disconnected, remove it
-                // This part needs careful implementation to avoid ConcurrentModificationException
+                // Client is likely disconnected, remove it to prevent future errors.
+                // This part needs careful implementation to avoid ConcurrentModificationException,
+                // but ConcurrentHashMap is safe to modify while iterating.
                 System.err.println("Error notifying client, removing: " + e.getMessage());
             }
         }
     }
 
-    // Method to notify a single client
+    // Method to notify a single, specific client by their username.
     public void notifyClient(String username, String message) {
         IClientCallback client = activeClients.get(username);
         if (client != null) {
@@ -128,7 +135,7 @@ public class StoreFactoryImpl extends UnicastRemoteObject implements IStoreFacto
                 client.notify(message);
             } catch (RemoteException e) {
                 System.err.println("Error notifying client " + username + ", removing: " + e.getMessage());
-                // Client is likely disconnected, remove it
+                // Client is likely disconnected, remove it to prevent future errors.
                 activeClients.remove(username);
             }
         }

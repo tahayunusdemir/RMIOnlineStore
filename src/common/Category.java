@@ -2,10 +2,15 @@ package common;
 
 import java.io.Serializable;
 
+/**
+ * Represents a product category.
+ * This is a simple Data Transfer Object (DTO) used to pass category information
+ * between the server and the client.
+ */
 public class Category implements Serializable {
     private static final long serialVersionUID = 1L;
-    private int id;
-    private String name;
+    private int id; // The unique identifier for the category.
+    private String name; // The name of the category (e.g., "Running Shoes").
 
     public Category(int id, String name) {
         this.id = id;

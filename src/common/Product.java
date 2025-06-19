@@ -2,17 +2,22 @@ package common;
 
 import java.io.Serializable;
 
+/**
+ * Represents a product available in the store.
+ * This Data Transfer Object (DTO) contains all attributes of a product
+ * and is Serializable to be passed between the server and client.
+ */
 public class Product implements Serializable {
     private static final long serialVersionUID = 1L;
-    private int id;
-    private String name;
-    private String description;
-    private double price;
-    private int stockQuantity;
-    private String category;
-    private String brand;
-    private String size;
-    private String color;
+    private int id; // The unique identifier for the product.
+    private String name; // The name of the product.
+    private String description; // A detailed description of the product.
+    private double price; // The price of a single unit of the product.
+    private int stockQuantity; // The current number of units in stock.
+    private String category; // The name of the category this product belongs to.
+    private String brand; // The brand of the product (e.g., "Nike").
+    private String size; // The size of the product (e.g., "42", "L").
+    private String color; // The color of the product.
 
     public Product(int id, String name, String description, double price, int stockQuantity, String category, String brand, String size, String color) {
         this.id = id;

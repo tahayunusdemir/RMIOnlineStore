@@ -159,7 +159,7 @@ public class AdminPanelImpl extends UnicastRemoteObject implements IAdminPanel {
         String username = null;
 
         try (Connection conn = DatabaseManager.getConnection()) {
-            // Get username for notification
+            // First, get the username associated with the order to send a notification.
             try (PreparedStatement pstmt = conn.prepareStatement(getUsernameSql)) {
                 pstmt.setInt(1, orderId);
                 try (ResultSet rs = pstmt.executeQuery()) {
@@ -178,7 +178,7 @@ public class AdminPanelImpl extends UnicastRemoteObject implements IAdminPanel {
                 int affectedRows = pstmt.executeUpdate();
                 if (affectedRows > 0) {
                     System.out.println("Order " + orderId + " status updated to " + newStatus);
-                    // Notify the client if they are online
+                    // After updating, notify the client if they are currently online.
                     if (username != null) {
                         String message = "The status of your order #" + orderId + " has been updated to: " + newStatus;
                         storeFactory.notifyClient(username, message);
@@ -226,7 +226,8 @@ public class AdminPanelImpl extends UnicastRemoteObject implements IAdminPanel {
             pstmt.executeUpdate();
             System.out.println("Category added successfully: " + categoryName);
         } catch (SQLException e) {
-            // SQL state '23000' is for integrity constraint violation (e.g., duplicate entry)
+            // SQL state '23000' indicates an integrity constraint violation (e.g., duplicate key).
+            // This prevents adding a category that already exists.
             if (e.getSQLState().startsWith("23")) {
                 throw new RemoteException("Category '" + categoryName + "' already exists.", e);
             }
@@ -258,12 +259,12 @@ public class AdminPanelImpl extends UnicastRemoteObject implements IAdminPanel {
 
     @Override
     public synchronized void deleteProduct(int productId) throws RemoteException {
-        // Check if the product is in any orders
+        // Safety check: a product cannot be deleted if it has been ordered by a customer.
         String checkOrdersSql = "SELECT COUNT(*) FROM order_items WHERE productId = ?";
         String deleteProductSql = "DELETE FROM products WHERE id = ?";
 
         try (Connection conn = DatabaseManager.getConnection()) {
-            // Check for existing orders
+            // Check for existing orders containing this product.
             try (PreparedStatement pstmt = conn.prepareStatement(checkOrdersSql)) {
                 pstmt.setInt(1, productId);
                 ResultSet rs = pstmt.executeQuery();
@@ -290,12 +291,12 @@ public class AdminPanelImpl extends UnicastRemoteObject implements IAdminPanel {
 
     @Override
     public synchronized void deleteCategory(int categoryId) throws RemoteException {
-        // Check if the category is used by any products
+        // Safety check: a category cannot be deleted if products are still assigned to it.
         String checkProductsSql = "SELECT COUNT(*) FROM products WHERE categoryId = ?";
         String deleteCategorySql = "DELETE FROM categories WHERE id = ?";
 
         try (Connection conn = DatabaseManager.getConnection()) {
-            // Check for products in this category
+            // Check for products in this category before deleting.
             try (PreparedStatement pstmt = conn.prepareStatement(checkProductsSql)) {
                 pstmt.setInt(1, categoryId);
                 ResultSet rs = pstmt.executeQuery();

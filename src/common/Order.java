@@ -4,21 +4,29 @@ import java.io.Serializable;
 import java.util.Date;
 import java.util.List;
 
+/**
+ * Represents a customer order.
+ * This DTO contains all details of an order, including the customer, items,
+ * and its current status. It is Serializable for RMI transport.
+ */
 public class Order implements Serializable {
     private static final long serialVersionUID = 1L;
 
+    /**
+     * Represents the possible states of an order.
+     */
     public enum Status {
-        PENDING,
-        SHIPPED,
-        DELIVERED
+        PENDING, // Order has been placed but not yet processed.
+        SHIPPED, // Order has been shipped to the customer.
+        DELIVERED // Order has been successfully delivered.
     }
 
-    private int id;
-    private int customerId;
-    private Date orderDate;
-    private List<OrderItem> items;
-    private double totalAmount;
-    private Status status;
+    private int id; // The unique identifier for the order.
+    private int customerId; // The ID of the customer who placed the order.
+    private Date orderDate; // The date and time the order was placed.
+    private List<OrderItem> items; // The list of items included in this order.
+    private double totalAmount; // The total cost of the order.
+    private Status status; // The current status of the order (e.g., PENDING).
 
     public Order(int id, int customerId, Date orderDate, List<OrderItem> items, double totalAmount, Status status) {
         this.id = id;
