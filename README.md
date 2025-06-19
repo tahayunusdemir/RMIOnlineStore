@@ -22,7 +22,7 @@ The application provides a console-based interface for both regular customers an
 ### Customer Functionalities
 -   **User Authentication:** Secure registration and login for customers.
 -   **Browse Products:** View a list of all available products with details like price and stock.
--   **Shopping Cart:** Add products to a personal shopping cart with real-time stock validation.
+-   **Shopping Cart:** Add products to a personal shopping cart. Users can also **view their cart**, **remove a specific item**, or **clear the entire cart** with a confirmation. The cart provides real-time stock validation.
 -   **Place Orders:** Convert the shopping cart into an order. The system provides a detailed order confirmation and a note that payment is due on delivery.
 -   **Order History:** View a history of all past orders and their current status.
 -   **Real-time Notifications:** Receive instant notifications from the server (e.g., when an order's status is updated by an admin).
@@ -75,6 +75,13 @@ The application requires a MySQL database to function.
     private static final String USER = "your_mysql_username";
     private static final String PASS = "your_mysql_password";
     ```
+
+---
+
+## Security Considerations
+
+-   **Password Hashing:** For simplicity in this academic project, user passwords are currently stored in plain text. In a real-world production environment, it is critical to hash passwords using a strong, salted algorithm like BCrypt before storing them in the database.
+-   **SQL Injection:** The application uses `PreparedStatement` for all database queries, which effectively prevents SQL injection vulnerabilities.
 
 ---
 
