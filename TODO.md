@@ -87,23 +87,23 @@ This TODO list details the steps to be followed to develop the RMI-based "Sports
 
 ---
 
-### ☐ Phase 4: Developing the Client Side (`client` package)
+### ☑ Phase 4: Developing the Client Side (`client` package)
 
--   [ ] **Create the Main Client Class (`StoreClient.java`):**
-    -   [ ] Make the class extend `UnicastRemoteObject` and implement `IClientCallback`.
-    -   [ ] Implement the `notify(String message)` method to display messages from the server using `System.out.println`.
-    -   [ ] Inside the `main` method:
-        -   [ ] Wrap all remote method calls (including `lookup`) in `try-catch (RemoteException e)` blocks to handle network or server errors gracefully.
-        -   [ ] Connect to the server with `IStoreFactory factory = (IStoreFactory) Naming.lookup("rmi://localhost/StoreFactory");`.
-        -   [ ] Use `Scanner` or a similar class to get input from the user.
-        -   [ ] **Main Menu Loop:**
-            -   [ ] Display options: 1- Login, 2- Register, 3- Admin Login, 4- Exit.
-            -   [ ] Based on user input, make calls to `factory.login(...)`, `factory.registerCustomer(...)`, or `factory.adminLogin(...)`. Don't forget to pass the `this` reference as the callback in the `login` call.
-        -   [ ] **User Session Menu Loop:**
-            -   [ ] If login is successful, display a new menu through the `IUserSession` object: (Browse Products, My Cart, Place Order, Order History, Logout).
-            -   [ ] Call the relevant methods based on the selection and display the results to the user.
-        -   [ ] **Admin Session Menu Loop:**
-            -   [ ] If admin login is successful, display a new menu through the `IAdminPanel` object: (Add Product, Update Stock, View Statistics, Logout).
+-   [x] **Create the Main Client Class (`StoreClient.java`):**
+    -   [x] Make the class extend `UnicastRemoteObject` and implement `IClientCallback`.
+    -   [x] Implement the `notify(String message)` method to display messages from the server using `System.out.println`.
+    -   [x] Inside the `main` method:
+        -   [x] Wrap all remote method calls (including `lookup`) in `try-catch (RemoteException e)` blocks to handle network or server errors gracefully.
+        -   [x] Connect to the server with `IStoreFactory factory = (IStoreFactory) Naming.lookup("rmi://localhost/StoreFactory");`.
+        -   [x] Use `Scanner` or a similar class to get input from the user.
+        -   [x] **Main Menu Loop:**
+            -   [x] Display options: 1- Login, 2- Register, 3- Admin Login, 4- Exit.
+            -   [x] Based on user input, make calls to `factory.login(...)`, `factory.registerCustomer(...)`, or `factory.adminLogin(...)`. Don't forget to pass the `this` reference as the callback in the `login` call.
+        -   [x] **User Session Menu Loop:**
+            -   [x] If login is successful, display a new menu through the `IUserSession` object: (Browse Products, My Cart, Place Order, Order History, Logout).
+            -   [x] Call the relevant methods based on the selection and display the results to the user.
+        -   [x] **Admin Session Menu Loop:**
+            -   [x] If admin login is successful, display a new menu through the `IAdminPanel` object: (Add Product, Update Stock, View Statistics, Logout).
 
 ---
 
