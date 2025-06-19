@@ -56,3 +56,51 @@ CREATE TABLE IF NOT EXISTS order_items (
 
 -- Let's add a sample category
 INSERT INTO categories (name) VALUES ('Running Shoes') ON DUPLICATE KEY UPDATE name=name;
+
+-- Let's add another sample category
+INSERT INTO categories (name) VALUES ('Football Jerseys') ON DUPLICATE KEY UPDATE name=name;
+
+-- Let's add some sample products
+INSERT INTO products (name, description, price, stockQuantity, categoryId, brand, size, color) VALUES
+('Nike Air Zoom Pegasus 40', 'A responsive ride for any run.', 129.99, 50, (SELECT id FROM categories WHERE name = 'Running Shoes'), 'Nike', '42', 'Black'),
+('Adidas Ultraboost 22', 'Ultimate energy return and comfort.', 180.00, 30, (SELECT id FROM categories WHERE name = 'Running Shoes'), 'Adidas', '43', 'White'),
+('FC Barcelona 23/24 Home Jersey', 'Official home jersey for the 23/24 season.', 95.50, 100, (SELECT id FROM categories WHERE name = 'Football Jerseys'), 'Nike', 'L', 'Blue/Red');
+
+-- Let's add more categories
+INSERT INTO categories (name) VALUES ('Basketball Gear'), ('Fitness Apparel') ON DUPLICATE KEY UPDATE name=name;
+
+-- Let's add more products
+INSERT INTO products (name, description, price, stockQuantity, categoryId, brand, size, color) VALUES
+('Spalding NBA Street Basketball', 'Official size and weight street basketball.', 24.99, 150, (SELECT id FROM categories WHERE name = 'Basketball Gear'), 'Spalding', '7', 'Orange'),
+('Nike Dri-FIT Training T-Shirt', 'Sweat-wicking fabric to keep you dry.', 35.00, 200, (SELECT id FROM categories WHERE name = 'Fitness Apparel'), 'Nike', 'M', 'Grey'),
+('Real Madrid 23/24 Away Jersey', 'Official away jersey for the 23/24 season.', 95.50, 80, (SELECT id FROM categories WHERE name = 'Football Jerseys'), 'Adidas', 'M', 'Navy');
+
+-- Let's add some sample customers (passwords are 'password123' and 'securepass')
+INSERT INTO customers (username, password, name, address) VALUES
+('alice', 'password123', 'Alice Smith', '456 Oak Ave, Othertown'),
+('bob', 'securepass', 'Bob Johnson', '789 Pine St, Anotherville')
+ON DUPLICATE KEY UPDATE username=username;
+
+-- Let's create a sample order for Alice
+INSERT INTO orders (customerId, orderDate, totalAmount, status) VALUES
+((SELECT id FROM customers WHERE username = 'alice'), '2024-05-10 10:30:00', 164.98, 'DELIVERED');
+
+-- Let's add items to Alice's order
+INSERT INTO order_items (orderId, productId, quantity, price) VALUES
+((SELECT id FROM orders WHERE customerId = (SELECT id FROM customers WHERE username = 'alice') LIMIT 1), (SELECT id FROM products WHERE name LIKE 'Nike Air Zoom%'), 1, 129.99),
+((SELECT id FROM orders WHERE customerId = (SELECT id FROM customers WHERE username = 'alice') LIMIT 1), (SELECT id FROM products WHERE name LIKE 'Spalding%'), 1, 24.99);
+
+-- Let's create a sample order for Bob
+INSERT INTO orders (customerId, orderDate, totalAmount, status) VALUES
+((SELECT id FROM customers WHERE username = 'bob'), '2024-05-20 14:00:00', 35.00, 'SHIPPED');
+
+-- Let's add an item to Bob's order
+INSERT INTO order_items (orderId, productId, quantity, price) VALUES
+((SELECT id FROM orders WHERE customerId = (SELECT id FROM customers WHERE username = 'bob') LIMIT 1), (SELECT id FROM products WHERE name LIKE 'Nike Dri-FIT%'), 1, 35.00);
+
+-- Let's create a recent PENDING order for Alice to test status updates
+INSERT INTO orders (customerId, orderDate, totalAmount, status) VALUES
+((SELECT id FROM customers WHERE username = 'alice'), NOW(), 95.50, 'PENDING');
+
+INSERT INTO order_items (orderId, productId, quantity, price) VALUES
+(LAST_INSERT_ID(), (SELECT id FROM products WHERE name LIKE 'Real Madrid%'), 1, 95.50);

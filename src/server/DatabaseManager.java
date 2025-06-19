@@ -10,40 +10,17 @@ public class DatabaseManager {
     private static final String USER = "root"; // <-- Kendi MySQL kullanıcı adınızı girin
     private static final String PASS = "6055"; // <-- Kendi MySQL şifrenizi girin
 
-    private static Connection connection = null;
-
     private DatabaseManager() {
-        // Singleton pattern
+        // Private constructor to prevent instantiation
     }
 
-    public static Connection getConnection() {
-        if (connection == null) {
-            try {
-                // Sürücüyü yükle
-                Class.forName("com.mysql.cj.jdbc.Driver");
-                // Bağlantıyı oluştur
-                connection = DriverManager.getConnection(URL, USER, PASS);
-                System.out.println("Database connection established successfully.");
-            } catch (ClassNotFoundException e) {
-                System.err.println("MySQL JDBC Driver not found.");
-                e.printStackTrace();
-            } catch (SQLException e) {
-                System.err.println("Failed to connect to the database.");
-                e.printStackTrace();
-            }
-        }
-        return connection;
-    }
-
-    public static void closeConnection() {
-        if (connection != null) {
-            try {
-                connection.close();
-                connection = null;
-                System.out.println("Database connection closed.");
-            } catch (SQLException e) {
-                e.printStackTrace();
-            }
+    public static Connection getConnection() throws SQLException {
+        try {
+            Class.forName("com.mysql.cj.jdbc.Driver");
+            return DriverManager.getConnection(URL, USER, PASS);
+        } catch (ClassNotFoundException e) {
+            System.err.println("MySQL JDBC Driver not found.");
+            throw new SQLException("MySQL JDBC Driver not found", e);
         }
     }
 } 

@@ -53,9 +53,33 @@ public class UserSessionImpl extends UnicastRemoteObject implements IUserSession
 
     @Override
     public synchronized void addToCart(int productId, int quantity) throws RemoteException {
-        // In a real scenario, you should check stock before adding
-        shoppingCart.put(productId, shoppingCart.getOrDefault(productId, 0) + quantity);
-        System.out.println("Product " + productId + " added to cart for customer " + customer.getUsername());
+        if (quantity <= 0) {
+            throw new RemoteException("Quantity must be positive.");
+        }
+
+        String sql = "SELECT stockQuantity FROM products WHERE id = ?";
+        try (Connection conn = DatabaseManager.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setInt(1, productId);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    int stock = rs.getInt("stockQuantity");
+                    int currentCartQuantity = shoppingCart.getOrDefault(productId, 0);
+                    if (stock >= quantity + currentCartQuantity) {
+                        shoppingCart.put(productId, currentCartQuantity + quantity);
+                        System.out.println("Product " + productId + " added to cart for customer " + customer.getUsername());
+                    } else {
+                        throw new RemoteException("Not enough stock for product ID: " + productId + ". Available: " + stock);
+                    }
+                } else {
+                    throw new RemoteException("Product with ID " + productId + " not found.");
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            throw new RemoteException("Database error while adding to cart.", e);
+        }
     }
 
     @Override

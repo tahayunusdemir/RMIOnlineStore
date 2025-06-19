@@ -20,7 +20,6 @@ public class StoreFactoryImpl extends UnicastRemoteObject implements IStoreFacto
     public StoreFactoryImpl() throws RemoteException {
         super();
         activeClients = new ConcurrentHashMap<>();
-        DatabaseManager.getConnection(); // Initialize connection on startup
     }
 
     @Override
@@ -94,7 +93,7 @@ public class StoreFactoryImpl extends UnicastRemoteObject implements IStoreFacto
     public synchronized IAdminPanel adminLogin(String username, String password) throws RemoteException {
         if ("admin".equals(username) && "admin".equals(password)) {
             System.out.println("Admin login successful: " + username);
-            return new AdminPanelImpl();
+            return new AdminPanelImpl(this);
         }
         System.out.println("Admin login failed: " + username);
         return null;
@@ -117,6 +116,20 @@ public class StoreFactoryImpl extends UnicastRemoteObject implements IStoreFacto
                 // Client is likely disconnected, remove it
                 // This part needs careful implementation to avoid ConcurrentModificationException
                 System.err.println("Error notifying client, removing: " + e.getMessage());
+            }
+        }
+    }
+
+    // Method to notify a single client
+    public void notifyClient(String username, String message) {
+        IClientCallback client = activeClients.get(username);
+        if (client != null) {
+            try {
+                client.notify(message);
+            } catch (RemoteException e) {
+                System.err.println("Error notifying client " + username + ", removing: " + e.getMessage());
+                // Client is likely disconnected, remove it
+                activeClients.remove(username);
             }
         }
     }

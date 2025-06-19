@@ -121,3 +121,44 @@ This TODO list details the steps to be followed to develop the RMI-based "Sports
     -   [ ] Log in as an administrator, add a new product (e.g., "Adidas Ultraboost" shoes).
     -   [ ] Verify that the other client sees the newly added product.
     -   [ ] **Callback Test:** Manually change the status of an order on the server side (or add an admin method for this) and check if the client receives a notification. 
+
+---
+
+### ☑ Phase 6: Feature Enhancements & Refinements
+
+-   [x] **Refactored `DatabaseManager`:**
+    -   [x] Modified `DatabaseManager` to create a new database connection for each request. This fixed critical `SQLNonTransientConnectionException` errors by properly supporting `try-with-resources` blocks across the application.
+
+-   [x] **Enhanced Admin Panel (`IAdminPanel`):**
+    -   [x] **Browse Products:** Added a `browseProducts()` method to allow admins to view all products directly from their panel.
+    -   [x] **Detailed Statistics:** Implemented `getStatistics()` to show a comprehensive report including total customers, products, orders, and sales revenue.
+    -   [x] **Update Order Status:** Admins can now view a list of all orders and then select one to update its status (e.g., from `PENDING` to `SHIPPED`).
+    -   [x] **Client Callback on Status Change:** When an admin changes an order's status, a notification is automatically sent via the callback mechanism to the specific client who placed the order (if they are online).
+
+-   [x] **Improved Business Logic (`server` package):**
+    -   [x] **Cart Validation:** The `addToCart` method in `UserSessionImpl` now validates against the database to ensure a product exists and has sufficient stock before being added to a user's cart.
+
+-   [x] **Updated Client UI (`StoreClient`):**
+    -   [x] The admin menu in the client application has been updated to include the new "Browse Products" and "Update Order Status" features.
+    -   [x] The "Update Order Status" workflow was improved to first display all orders, making it easier for the admin to select the correct one.
+
+-   [x] **Populated Database (`query.sql`):**
+    -   [x] Added more sample categories and products to the `query.sql` script to provide initial data for robust testing and demonstration.
+
+---
+
+### ☑ Phase 7: Admin Panel Overhaul & Advanced Features
+
+-   [x] **Major UI/UX Refactoring (`StoreClient`):**
+    -   [x] Re-structured the entire admin menu for better organization and clarity.
+    -   [x] Implemented a cancellation feature allowing admins to type `cancel` to exit any multi-step process (e.g., adding a product) without completing it.
+    -   [x] Refactored complex admin actions into dedicated helper methods (`addProductFlow`, `updateStockFlow`, etc.) to improve code readability and maintainability.
+
+-   [x] **Advanced Product & Category Management:**
+    -   [x] **Delete Product:** Added functionality for admins to delete products. The system includes a crucial safety check to prevent deletion if the product is linked to any existing orders.
+    -   [x] **Delete Category:** Implemented a feature to delete categories, with a safeguard that prevents removal if any products are still assigned to that category.
+    -   [x] **List Categories:** Created a dedicated menu option for admins to quickly view all available categories and their IDs.
+
+-   [x] **Enhanced Workflows:**
+    -   [x] **Add Product Workflow:** Admins must now select a category from a dynamically generated list instead of typing a name manually, ensuring data consistency.
+    -   [x] **Add Category Workflow:** Before prompting for a new category name, the client now displays a list of existing categories to help prevent duplicates. 
