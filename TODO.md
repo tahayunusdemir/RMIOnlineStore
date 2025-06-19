@@ -59,28 +59,31 @@ This TODO list details the steps to be followed to develop the RMI-based "Sports
 
 ---
 
-### ☐ Phase 3: Developing the Server Side (`server` package)
+### ☑ Phase 3: Developing the Server Side (`server` package)
 
--   [ ] **Create Implementation Classes:**
-    -   [ ] `UserSessionImpl.java` (extends `UnicastRemoteObject`, implements `IUserSession`).
-    -   [ ] `AdminPanelImpl.java` (extends `UnicastRemoteObject`, implements `IAdminPanel`).
-    -   [ ] `StoreFactoryImpl.java` (extends `UnicastRemoteObject`, implements `IStoreFactory`).
-        -   Inside this class, use a `Map<String, IClientCallback>` structure (e.g., username -> callback) to hold the `IClientCallback` references of active clients.
+-   [x] **Create Implementation Classes:**
+    -   [x] `UserSessionImpl.java` (extends `UnicastRemoteObject`, implements `IUserSession`).
+    -   [x] `AdminPanelImpl.java` (extends `UnicastRemoteObject`, implements `IAdminPanel`).
+    -   [x] `StoreFactoryImpl.java` (extends `UnicastRemoteObject`, implements `IStoreFactory`).
+        -   [x] Inside this class, use a `Map<String, IClientCallback>` structure (e.g., username -> callback) to hold the `IClientCallback` references of active clients.
 
--   [ ] **Concurrency Management (Thread Safety):**
-    -   [ ] As specified in the `SD_T05.md` document, multiple clients can call server methods simultaneously. Ensure that methods accessing shared data (e.g., stock quantity, order lists, callback list) are made thread-safe using the `synchronized` keyword or `java.util.concurrent` classes.
+-   [x] **Concurrency Management (Thread Safety):**
+    -   [x] As specified in the `SD_T05.md` document, multiple clients can call server methods simultaneously. Ensure that methods accessing shared data (e.g., stock quantity, order lists, callback list) are made thread-safe using the `synchronized` keyword or `java.util.concurrent` classes.
 
--   [ ] **Database Integration:**
-    -   [ ] Set up a database (e.g., MySQL, PostgreSQL).
-    -   [ ] Add the JDBC driver to your project.
-    -   [ ] Establish a database connection within the implementation classes and perform CRUD (Create, Read, Update, Delete) operations.
+-   [x] **Database Integration (MySQL):**
+    -   [x] **1. Add MySQL JDBC Driver:** Download the MySQL Connector/J `.jar` file and add it as a library to the IntelliJ project.
+    -   [x] **2. Create Database and Tables:** Create a database named `rmi_onlinestore` and execute the SQL script to create `customers`, `products`, `categories`, `orders`, and `order_items` tables.
+    -   [x] **3. Create `DatabaseManager.java`:** Develop a centralized class in the `server` package to manage the database connection (e.g., using Singleton pattern). This class will handle connection details and provide a static method to get the connection.
+    -   [x] **4. Refactor `StoreFactoryImpl.java`:** Replace in-memory lists with JDBC calls to the database for user authentication and registration.
+    -   [x] **5. Refactor `AdminPanelImpl.java`:** Implement product and stock management methods using JDBC to interact with the `products` table.
+    -   [x] **6. Refactor `UserSessionImpl.java`:** Update methods like `browseProducts`, `addToCart`, `placeOrder`, and `getOrderHistory` to perform their logic using database queries instead of in-memory maps and lists.
 
--   [ ] **Create the Main Server Class (`StoreServer.java`):**
-    -   [ ] Create a `main` method.
-    -   [ ] Start the RMI registry with `LocateRegistry.createRegistry(1099);`.
-    -   [ ] Create a `StoreFactoryImpl` object.
-    -   [ ] Register the object with `Naming.rebind("StoreFactory", factory);`.
-    -   [ ] Print a "Server is ready." message to the console.
+-   [x] **Create the Main Server Class (`StoreServer.java`):**
+    -   [x] Create a `main` method.
+    -   [x] Start the RMI registry with `LocateRegistry.createRegistry(1099);`.
+    -   [x] Create a `StoreFactoryImpl` object.
+    -   [x] Register the object with `Naming.rebind("StoreFactory", factory);`.
+    -   [x] Print a "Server is ready." message to the console.
 
 ---
 
