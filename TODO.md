@@ -34,7 +34,7 @@ This TODO list details the steps to be followed to develop the RMI-based "Sports
         ```
 ---
 
-### ☐ Phase 1: Creating the Project Structure and Common Classes
+### ☑ Phase 1: Creating the Project Structure and Common Classes
 
 -   [x] **Create Project Directory:** Structure the project under three main Java packages:
     -   `common`: For classes that will be used by both the client and the server.
@@ -50,48 +50,12 @@ This TODO list details the steps to be followed to develop the RMI-based "Sports
 
 ---
 
-### ☐ Phase 2: Designing the Remote Interfaces (`common` package)
+### ☑ Phase 2: Designing the Remote Interfaces (`common` package)
 
--   [ ] **`IClientCallback.java`:** For providing feedback to the client.
-    ```java
-    public interface IClientCallback extends java.rmi.Remote {
-        void notify(String message) throws java.rmi.RemoteException;
-    }
-    ```
-
--   [ ] **`IUserSession.java`:** For managing user session operations.
-    ```java
-    import java.util.List;
-    import java.util.Map;
-    // Necessary imports...
-
-    public interface IUserSession extends java.rmi.Remote {
-        List<Product> browseProducts() throws java.rmi.RemoteException;
-        void addToCart(int productId, int quantity) throws java.rmi.RemoteException;
-        Map<Product, Integer> viewCart() throws java.rmi.RemoteException;
-        Order placeOrder() throws java.rmi.RemoteException;
-        List<Order> getOrderHistory() throws java.rmi.RemoteException;
-        void logout() throws java.rmi.RemoteException;
-    }
-    ```
-
--   [ ] **`IAdminPanel.java`:** For managing administrator operations.
-    ```java
-    public interface IAdminPanel extends java.rmi.Remote {
-        void addProduct(Product product) throws java.rmi.RemoteException;
-        void updateStock(int productId, int newQuantity) throws java.rmi.RemoteException;
-        String getStatistics() throws java.rmi.RemoteException;
-    }
-    ```
-
--   [ ] **`IStoreFactory.java`:** As the main factory interface.
-    ```java
-    public interface IStoreFactory extends java.rmi.Remote {
-        IUserSession login(String username, String password, IClientCallback clientCallback) throws java.rmi.RemoteException;
-        void registerCustomer(Customer newCustomer) throws java.rmi.RemoteException;
-        IAdminPanel adminLogin(String username, String password) throws java.rmi.RemoteException;
-    }
-    ```
+-   [x] **`IClientCallback.java`:** For providing feedback to the client.
+-   [x] **`IUserSession.java`:** For managing user session operations.
+-   [x] **`IAdminPanel.java`:** For managing administrator operations.
+-   [x] **`IStoreFactory.java`:** As the main factory interface.
 
 ---
 
